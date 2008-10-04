@@ -223,7 +223,7 @@ namespace DirectShowLib.Samples
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "Form1";
-			this.Text = "DxPropPages";
+			this.Text = "Binocular Vision";
 			this.ResumeLayout(false);
 
 		}
