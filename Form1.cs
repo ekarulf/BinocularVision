@@ -10,6 +10,7 @@ Written by oohansen@gmail.com
 using System;
 using System.Drawing;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Data;
@@ -33,7 +34,7 @@ namespace WUSTL.CSE.BinocularVision
 		private System.Windows.Forms.Button RecordButton;
 		private System.Windows.Forms.TextBox FolderBox;
 		private System.Windows.Forms.Panel panel1;
-        private Panel panel2;
+        private System.Windows.Forms.Panel panel2;
         private Button VideoButton2;
         private ComboBox VideoDeviceList2;
         private GroupBox groupBox1;
@@ -63,11 +64,15 @@ namespace WUSTL.CSE.BinocularVision
 			int dwReserved, 
 			IntPtr lpvReserved);
 
-			IMediaControl MediaControl1 = null;
-			IGraphBuilder GraphBuilder1 = null;
-            IBaseFilter VideoDevice1 = null;
-            IBaseFilter VideoDevice2 = null;
-            IBaseFilter theCompressor = null;
+        List<DsDevice> DeviceList = new List<DsDevice>();
+        IMediaControl MediaControl1 = null;
+        IMediaControl MediaControl2 = null;
+        IGraphBuilder GraphBuilder1 = null;
+        IGraphBuilder GraphBuilder2 = null;
+        IBaseFilter VideoDevice1 = null;
+        IBaseFilter VideoDevice2 = null;
+        IBaseFilter Compressor1 = null;
+        IBaseFilter Compressor2 = null;
 
 #if DEBUG
 		// Allow you to "Connect to remote graph" from GraphEdit
@@ -88,7 +93,8 @@ namespace WUSTL.CSE.BinocularVision
 			//enumerate Video Input filters and add them to comboBox1
 			foreach (DsDevice ds in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
 			{
-				VideoDeviceList1.Items.Add(ds.Name);
+                DeviceList.Add(ds);
+                VideoDeviceList1.Items.Add(ds.Name);
                 VideoDeviceList2.Items.Add(ds.Name);
 			}
 
@@ -359,10 +365,13 @@ namespace WUSTL.CSE.BinocularVision
 		{
 			//Stop the Graph
 			MediaControl1.Stop();
+            MediaControl2.Stop();
 
 			//Release COM objects
 			Marshal.ReleaseComObject(MediaControl1);
+            Marshal.ReleaseComObject(MediaControl2);
 			Marshal.ReleaseComObject(GraphBuilder1);
+            Marshal.ReleaseComObject(GraphBuilder2);
 
 			//Reset button state
 			RecordButton.Enabled = true;
@@ -381,73 +390,75 @@ namespace WUSTL.CSE.BinocularVision
 		/// </summary>
 		public void Record()
 		{
-			if (MediaControl1 != null)
+			if (MediaControl1 != null && MediaControl2 != null)
 			{
 				//Reset button state
 				RecordButton.Enabled = false;
-				StopButton.Enabled = true;	
+				StopButton.Enabled = true;
 			
-				//Run the graph
+				//Run the graphs
 				MediaControl1.Run();
+                MediaControl2.Run();
 			}
 		}
 
 		/// <summary>
 		/// Initialize the graph
 		/// </summary>
-		public void InitGraph()
+		public static void InitGraph(IBaseFilter VideoDevice, IBaseFilter Compressor, Panel DisplayPanel, String filename, out IGraphBuilder GraphBuilder, out IMediaControl MediaControl)
 		{
-			if (VideoDevice1 == null)
-				return;
-
 			//Create the Graph
-			GraphBuilder1 = (IGraphBuilder) new FilterGraph();
+			GraphBuilder = (IGraphBuilder) new FilterGraph();
 			
 			//Create the Capture Graph Builder
 			ICaptureGraphBuilder2 captureGraphBuilder = null;
 			captureGraphBuilder = (ICaptureGraphBuilder2) new CaptureGraphBuilder2();
 			
 			//Create the media control for controlling the graph
-			MediaControl1 = (IMediaControl) this.GraphBuilder1;
+			MediaControl = (IMediaControl) GraphBuilder;
 
-			// Attach the filter graph to the capture graph
-			int hr = captureGraphBuilder.SetFiltergraph(this.GraphBuilder1);
+            // Validate inputs
+            if (VideoDevice == null || Compressor == null)
+                return;
+            
+            // Attach the filter graph to the capture graph
+			int hr = captureGraphBuilder.SetFiltergraph(GraphBuilder);
 			DsError.ThrowExceptionForHR(hr);
 
 			//Add the Video input device to the graph
-			hr = GraphBuilder1.AddFilter(VideoDevice1, "source filter");
+			hr = GraphBuilder.AddFilter(VideoDevice, "source filter");
 			DsError.ThrowExceptionForHR(hr);
 
 			
 			//Add the Video compressor filter to the graph
-			hr = GraphBuilder1.AddFilter(theCompressor, "compressor filter");
+			hr = GraphBuilder.AddFilter(Compressor, "compressor filter");
 			DsError.ThrowExceptionForHR(hr);
 
 			//Create the file writer part of the graph. SetOutputFileName does this for us, and returns the mux and sink
 			IBaseFilter mux;
 			IFileSinkFilter sink;
-			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, FolderBox.Text, out mux, out sink);
+			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, filename, out mux, out sink);
 			DsError.ThrowExceptionForHR(hr);
 
 
 			//Render any preview pin of the device
-			hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, VideoDevice1, null, null);
+			hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, VideoDevice, null, null);
 			DsError.ThrowExceptionForHR(hr);
 
 			//Connect the device and compressor to the mux to render the capture part of the graph
-			hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video, VideoDevice1, theCompressor, mux);
+			hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video, VideoDevice, Compressor, mux);
 			DsError.ThrowExceptionForHR(hr);
 
 #if DEBUG
-			m_rot = new DsROTEntry(GraphBuilder1);
+//			m_rot = new DsROTEntry(GraphBuilder);
 #endif
 
 			//get the video window from the graph
 			IVideoWindow videoWindow = null;
-			videoWindow = (IVideoWindow) GraphBuilder1;
+			videoWindow = (IVideoWindow) GraphBuilder;
 
 			//Set the owener of the videoWindow to an IntPtr of some sort (the Handle of any control - could be a form / button etc.)
-			hr = videoWindow.put_Owner(panel1.Handle);
+			hr = videoWindow.put_Owner(DisplayPanel.Handle);
 			DsError.ThrowExceptionForHR(hr);
 
 			//Set the style of the video window
@@ -455,7 +466,7 @@ namespace WUSTL.CSE.BinocularVision
 			DsError.ThrowExceptionForHR(hr);
 
 			// Position video window in client rect of main application window
-			hr = videoWindow.SetWindowPosition(0,0, panel1.Width, panel1.Height);
+			hr = videoWindow.SetWindowPosition(0,0, DisplayPanel.Width, DisplayPanel.Height);
 			DsError.ThrowExceptionForHR(hr);
 
 			// Make the video window visible
@@ -490,6 +501,14 @@ namespace WUSTL.CSE.BinocularVision
 
 			return (IBaseFilter)source;
 		}
+
+        private IBaseFilter CreateFilter(DsDevice device)
+        {
+            object source = null;
+            Guid iid = typeof(IBaseFilter).GUID;
+            device.Mon.BindToObject(null, null, ref iid, out source);
+            return (IBaseFilter)source;
+        }
 
 
 		/// <summary>
@@ -592,7 +611,7 @@ namespace WUSTL.CSE.BinocularVision
 		private void CodecButton_Click(object sender, System.EventArgs e)
 		{
 			//Display property page for the selected video compressor
-			DisplayPropertyPage(theCompressor);		
+			DisplayPropertyPage(Compressor1);		
 		}
 
 		private void RecordButton_Click(object sender, System.EventArgs e)
@@ -609,7 +628,9 @@ namespace WUSTL.CSE.BinocularVision
                 if (FolderBox.Text.Length == 0)
                     return;
             }
-			InitGraph();
+            String path = FolderBox.Text + "\\"+ FilenameBox.Text;
+            InitGraph(VideoDevice1, Compressor1, panel1, path + "-Device1.avi", out GraphBuilder1, out MediaControl1);
+            InitGraph(VideoDevice2, Compressor2, panel2, path + "-Device2.avi", out GraphBuilder2, out MediaControl2);
 			Record();
 		}
 
@@ -626,9 +647,8 @@ namespace WUSTL.CSE.BinocularVision
 				Marshal.ReleaseComObject(VideoDevice1);
 				VideoDevice1 = null;
 			}
-			//Create the filter for the selected video input device
-			string devicepath = VideoDeviceList1.SelectedItem.ToString();
-			VideoDevice1 = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
+
+            VideoDevice1 = CreateFilter(DeviceList[VideoDeviceList1.SelectedIndex]);
 		}
 
         private void VideoDeviceList2_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -639,22 +659,27 @@ namespace WUSTL.CSE.BinocularVision
                 Marshal.ReleaseComObject(VideoDevice2);
                 VideoDevice2 = null;
             }
-            //Create the filter for the selected video input device
-            string devicepath = VideoDeviceList2.SelectedItem.ToString();
-            VideoDevice2 = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
+
+            VideoDevice2 = CreateFilter(DeviceList[VideoDeviceList2.SelectedIndex]);
         }
 
 		private void CodecList_SelectedIndexChanged(object sender, System.EventArgs e)
 		{
 			//Release COM objects
-			if (theCompressor != null)
-			{
-				Marshal.ReleaseComObject(theCompressor);
-				theCompressor = null;
-			}
-			//Create the filter for the selected video compressor
+            if (Compressor1 != null)
+            {
+                Marshal.ReleaseComObject(Compressor1);
+                Compressor1 = null;
+            }
+            if (Compressor2 != null)
+            {
+                Marshal.ReleaseComObject(Compressor2);
+                Compressor2 = null;
+            }
+            //Create the filter for the selected video compressor
 			string devicepath = CodecList.SelectedItem.ToString();
-			theCompressor = CreateFilter(FilterCategory.VideoCompressorCategory, devicepath);
+			Compressor1 = CreateFilter(FilterCategory.VideoCompressorCategory, devicepath);
+            Compressor2 = CreateFilter(FilterCategory.VideoCompressorCategory, devicepath);
 		}
 
         private void OutputButton_Click(object sender, EventArgs e)
