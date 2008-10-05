@@ -18,27 +18,32 @@ using System.Diagnostics;
 
 using DirectShowLib;
 
-namespace DirectShowLib.Samples
+namespace WUSTL.CSE.BinocularVision
 {
 	/// <summary>
 	/// Summary description for Form1.
 	/// </summary>
 	public class Form1 : System.Windows.Forms.Form
 	{
-		private System.Windows.Forms.ComboBox comboBox1;
-		private System.Windows.Forms.ComboBox comboBox2;
-		private System.Windows.Forms.Button button1;
-		private System.Windows.Forms.Button button2;
-		private System.Windows.Forms.Button button3;
-		private System.Windows.Forms.Button button4;
-		private System.Windows.Forms.TextBox textBox1;
+		private System.Windows.Forms.ComboBox VideoDeviceList1;
+		private System.Windows.Forms.ComboBox CodecList;
+		private System.Windows.Forms.Button VideoButton1;
+		private System.Windows.Forms.Button CodecButton;
+		private System.Windows.Forms.Button StopButton;
+		private System.Windows.Forms.Button RecordButton;
+		private System.Windows.Forms.TextBox OutputBox;
 		private System.Windows.Forms.Panel panel1;
+        private Panel panel2;
+        private Button VideoButton2;
+        private ComboBox VideoDeviceList2;
+        private GroupBox groupBox1;
+        private Button OutputButton;
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
 		private System.ComponentModel.Container components = null;
 
-		//A (modified) definition of OleCreatePropertyFrame found here: http://groups.google.no/group/microsoft.public.dotnet.languages.csharp/browse_thread/thread/db794e9779144a46/55dbed2bab4cd772?lnk=st&q=[DllImport(%22olepro32.dll%22)]&rnum=1&hl=no#55dbed2bab4cd772
+		//A (modified) definition of OleCreatePropertyFrame found here: http://groups.google.com/group/microsoft.public.dotnet.languages.csharp/browse_thread/thread/db794e9779144a46/55dbed2bab4cd772?lnk=st&q=[DllImport(%22olepro32.dll%22)]&rnum=1&hl=no#55dbed2bab4cd772
 		[DllImport(@"oleaut32.dll")] 
 		public static extern int OleCreatePropertyFrame( 
 			IntPtr hwndOwner, 
@@ -56,8 +61,9 @@ namespace DirectShowLib.Samples
 
 			IMediaControl mediaControl = null;
 			IGraphBuilder graphBuilder = null;
-			IBaseFilter theDevice = null;
-			IBaseFilter theCompressor = null;
+            IBaseFilter VideoDevice1 = null;
+            IBaseFilter VideoDevice2 = null;
+            IBaseFilter theCompressor = null;
 
 #if DEBUG
 		// Allow you to "Connect to remote graph" from GraphEdit
@@ -78,30 +84,37 @@ namespace DirectShowLib.Samples
 			//enumerate Video Input filters and add them to comboBox1
 			foreach (DsDevice ds in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
 			{
-				comboBox1.Items.Add(ds.Name);
+				VideoDeviceList1.Items.Add(ds.Name);
+                VideoDeviceList2.Items.Add(ds.Name);
 			}
 
 			//enumerate Video Compressor filters and add them to comboBox1
 			foreach (DsDevice ds in DsDevice.GetDevicesOfCat(FilterCategory.VideoCompressorCategory))
 			{
-				comboBox2.Items.Add(ds.Name);
+				CodecList.Items.Add(ds.Name);
 			}
 
 			//Select first combobox item
-			if (comboBox1.Items.Count > 0)
+			if (VideoDeviceList1.Items.Count > 0)
 			{
-				comboBox1.SelectedIndex = 0;
+				VideoDeviceList1.SelectedIndex = 0;
 			}
 
-			//Select first combobox item
-			if (comboBox2.Items.Count > 0)
+            //Select second combobox item
+            if (VideoDeviceList2.Items.Count > 1)
+            {
+                VideoDeviceList2.SelectedIndex = 1;
+            }
+
+            //Select first combobox item
+			if (CodecList.Items.Count > 0)
 			{
-				comboBox2.SelectedIndex = 0;
+				CodecList.SelectedIndex = 0;
 			}
 
 			//Initialize button states
-			button4.Enabled = true;
-			button3.Enabled = false;
+			RecordButton.Enabled = true;
+			StopButton.Enabled = false;
 
 		}
 
@@ -127,104 +140,162 @@ namespace DirectShowLib.Samples
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.Resources.ResourceManager resources = new System.Resources.ResourceManager(typeof(Form1));
-			this.comboBox1 = new System.Windows.Forms.ComboBox();
-			this.comboBox2 = new System.Windows.Forms.ComboBox();
-			this.button1 = new System.Windows.Forms.Button();
-			this.button2 = new System.Windows.Forms.Button();
-			this.button3 = new System.Windows.Forms.Button();
-			this.button4 = new System.Windows.Forms.Button();
-			this.textBox1 = new System.Windows.Forms.TextBox();
-			this.panel1 = new System.Windows.Forms.Panel();
-			this.SuspendLayout();
-			// 
-			// comboBox1
-			// 
-			this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.comboBox1.Location = new System.Drawing.Point(8, 8);
-			this.comboBox1.Name = "comboBox1";
-			this.comboBox1.Size = new System.Drawing.Size(256, 21);
-			this.comboBox1.TabIndex = 0;
-			this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
-			// 
-			// comboBox2
-			// 
-			this.comboBox2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.comboBox2.Location = new System.Drawing.Point(8, 40);
-			this.comboBox2.Name = "comboBox2";
-			this.comboBox2.Size = new System.Drawing.Size(256, 21);
-			this.comboBox2.TabIndex = 1;
-			this.comboBox2.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
-			// 
-			// button1
-			// 
-			this.button1.Location = new System.Drawing.Point(272, 8);
-			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size(120, 24);
-			this.button1.TabIndex = 2;
-			this.button1.Text = "Show property pages";
-			this.button1.Click += new System.EventHandler(this.button1_Click);
-			// 
-			// button2
-			// 
-			this.button2.Location = new System.Drawing.Point(272, 40);
-			this.button2.Name = "button2";
-			this.button2.Size = new System.Drawing.Size(120, 24);
-			this.button2.TabIndex = 3;
-			this.button2.Text = "Show property pages";
-			this.button2.Click += new System.EventHandler(this.button2_Click);
-			// 
-			// button3
-			// 
-			this.button3.Location = new System.Drawing.Point(216, 400);
-			this.button3.Name = "button3";
-			this.button3.Size = new System.Drawing.Size(176, 23);
-			this.button3.TabIndex = 4;
-			this.button3.Text = "Stop";
-			this.button3.Click += new System.EventHandler(this.button3_Click);
-			// 
-			// button4
-			// 
-			this.button4.Location = new System.Drawing.Point(8, 400);
-			this.button4.Name = "button4";
-			this.button4.Size = new System.Drawing.Size(192, 23);
-			this.button4.TabIndex = 5;
-			this.button4.Text = "Record";
-			this.button4.Click += new System.EventHandler(this.button4_Click);
-			// 
-			// textBox1
-			// 
-			this.textBox1.Location = new System.Drawing.Point(8, 368);
-			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(384, 20);
-			this.textBox1.TabIndex = 6;
-			this.textBox1.Text = "c:\\test.avi";
-			// 
-			// panel1
-			// 
-			this.panel1.BackColor = System.Drawing.Color.Black;
-			this.panel1.Location = new System.Drawing.Point(8, 72);
-			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(384, 288);
-			this.panel1.TabIndex = 7;
-			// 
-			// Form1
-			// 
-			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-			this.ClientSize = new System.Drawing.Size(402, 432);
-			this.Controls.Add(this.panel1);
-			this.Controls.Add(this.textBox1);
-			this.Controls.Add(this.button4);
-			this.Controls.Add(this.button3);
-			this.Controls.Add(this.button2);
-			this.Controls.Add(this.button1);
-			this.Controls.Add(this.comboBox2);
-			this.Controls.Add(this.comboBox1);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-			this.Name = "Form1";
-			this.Text = "Binocular Vision";
-			this.ResumeLayout(false);
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            this.VideoDeviceList1 = new System.Windows.Forms.ComboBox();
+            this.CodecList = new System.Windows.Forms.ComboBox();
+            this.VideoButton1 = new System.Windows.Forms.Button();
+            this.CodecButton = new System.Windows.Forms.Button();
+            this.StopButton = new System.Windows.Forms.Button();
+            this.RecordButton = new System.Windows.Forms.Button();
+            this.OutputBox = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.VideoButton2 = new System.Windows.Forms.Button();
+            this.VideoDeviceList2 = new System.Windows.Forms.ComboBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.OutputButton = new System.Windows.Forms.Button();
+            this.groupBox1.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // VideoDeviceList1
+            // 
+            this.VideoDeviceList1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.VideoDeviceList1.Location = new System.Drawing.Point(8, 8);
+            this.VideoDeviceList1.Name = "VideoDeviceList1";
+            this.VideoDeviceList1.Size = new System.Drawing.Size(256, 21);
+            this.VideoDeviceList1.TabIndex = 0;
+            this.VideoDeviceList1.SelectedIndexChanged += new System.EventHandler(this.VideoDeviceList1_SelectedIndexChanged);
+            // 
+            // CodecList
+            // 
+            this.CodecList.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.CodecList.Location = new System.Drawing.Point(6, 19);
+            this.CodecList.Name = "CodecList";
+            this.CodecList.Size = new System.Drawing.Size(256, 21);
+            this.CodecList.TabIndex = 1;
+            this.CodecList.SelectedIndexChanged += new System.EventHandler(this.CodecList_SelectedIndexChanged);
+            // 
+            // VideoButton1
+            // 
+            this.VideoButton1.Location = new System.Drawing.Point(272, 8);
+            this.VideoButton1.Name = "VideoButton1";
+            this.VideoButton1.Size = new System.Drawing.Size(120, 24);
+            this.VideoButton1.TabIndex = 2;
+            this.VideoButton1.Text = "Configure";
+            this.VideoButton1.Click += new System.EventHandler(this.VideoDeviceButton1_Click);
+            // 
+            // CodecButton
+            // 
+            this.CodecButton.Enabled = false;
+            this.CodecButton.Location = new System.Drawing.Point(270, 16);
+            this.CodecButton.Name = "CodecButton";
+            this.CodecButton.Size = new System.Drawing.Size(120, 24);
+            this.CodecButton.TabIndex = 3;
+            this.CodecButton.Text = "Configure";
+            this.CodecButton.Click += new System.EventHandler(this.CodecButton_Click);
+            // 
+            // StopButton
+            // 
+            this.StopButton.Location = new System.Drawing.Point(604, 44);
+            this.StopButton.Name = "StopButton";
+            this.StopButton.Size = new System.Drawing.Size(192, 23);
+            this.StopButton.TabIndex = 11;
+            this.StopButton.Text = "Stop";
+            this.StopButton.Click += new System.EventHandler(this.StopButton_Click);
+            // 
+            // RecordButton
+            // 
+            this.RecordButton.Location = new System.Drawing.Point(604, 17);
+            this.RecordButton.Name = "RecordButton";
+            this.RecordButton.Size = new System.Drawing.Size(192, 23);
+            this.RecordButton.TabIndex = 10;
+            this.RecordButton.Text = "Record";
+            this.RecordButton.Click += new System.EventHandler(this.RecordButton_Click);
+            // 
+            // OutputBox
+            // 
+            this.OutputBox.Location = new System.Drawing.Point(6, 46);
+            this.OutputBox.Name = "OutputBox";
+            this.OutputBox.Size = new System.Drawing.Size(256, 20);
+            this.OutputBox.TabIndex = 6;
+            this.OutputBox.Text = "c:\\test.avi";
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.Black;
+            this.panel1.Location = new System.Drawing.Point(8, 47);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(384, 288);
+            this.panel1.TabIndex = 7;
+            // 
+            // panel2
+            // 
+            this.panel2.BackColor = System.Drawing.Color.Black;
+            this.panel2.Location = new System.Drawing.Point(426, 47);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(384, 288);
+            this.panel2.TabIndex = 8;
+            // 
+            // VideoButton2
+            // 
+            this.VideoButton2.Location = new System.Drawing.Point(690, 11);
+            this.VideoButton2.Name = "VideoButton2";
+            this.VideoButton2.Size = new System.Drawing.Size(120, 24);
+            this.VideoButton2.TabIndex = 10;
+            this.VideoButton2.Text = "Configure";
+            this.VideoButton2.Click += new System.EventHandler(this.VideoDeviceButton2_Click);
+            // 
+            // VideoDeviceList2
+            // 
+            this.VideoDeviceList2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.VideoDeviceList2.Location = new System.Drawing.Point(426, 11);
+            this.VideoDeviceList2.Name = "VideoDeviceList2";
+            this.VideoDeviceList2.Size = new System.Drawing.Size(256, 21);
+            this.VideoDeviceList2.TabIndex = 9;
+            this.VideoDeviceList2.SelectedIndexChanged += new System.EventHandler(this.VideoDeviceList2_SelectedIndexChanged);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.OutputButton);
+            this.groupBox1.Controls.Add(this.OutputBox);
+            this.groupBox1.Controls.Add(this.CodecList);
+            this.groupBox1.Controls.Add(this.CodecButton);
+            this.groupBox1.Controls.Add(this.StopButton);
+            this.groupBox1.Controls.Add(this.RecordButton);
+            this.groupBox1.Location = new System.Drawing.Point(8, 342);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(802, 79);
+            this.groupBox1.TabIndex = 11;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Output";
+            // 
+            // OutputButton
+            // 
+            this.OutputButton.Location = new System.Drawing.Point(270, 46);
+            this.OutputButton.Name = "OutputButton";
+            this.OutputButton.Size = new System.Drawing.Size(120, 23);
+            this.OutputButton.TabIndex = 7;
+            this.OutputButton.Text = "Browse";
+            this.OutputButton.UseVisualStyleBackColor = true;
+            // 
+            // Form1
+            // 
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
+            this.ClientSize = new System.Drawing.Size(822, 433);
+            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.VideoButton2);
+            this.Controls.Add(this.VideoDeviceList2);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.VideoButton1);
+            this.Controls.Add(this.VideoDeviceList1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Name = "Form1";
+            this.Text = "Binocular Vision";
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.ResumeLayout(false);
 
 		}
 		#endregion
@@ -251,8 +322,8 @@ namespace DirectShowLib.Samples
 			Marshal.ReleaseComObject(graphBuilder);
 
 			//Reset button state
-			button4.Enabled = true;
-			button3.Enabled = false;
+			RecordButton.Enabled = true;
+			StopButton.Enabled = false;
 #if DEBUG
 			if (m_rot != null)
 			{
@@ -270,8 +341,8 @@ namespace DirectShowLib.Samples
 			if (mediaControl != null)
 			{
 				//Reset button state
-				button4.Enabled = false;
-				button3.Enabled = true;	
+				RecordButton.Enabled = false;
+				StopButton.Enabled = true;	
 			
 				//Run the graph
 				mediaControl.Run();
@@ -283,7 +354,7 @@ namespace DirectShowLib.Samples
 		/// </summary>
 		public void InitGraph()
 		{
-			if (theDevice == null)
+			if (VideoDevice1 == null)
 				return;
 
 			//Create the Graph
@@ -301,7 +372,7 @@ namespace DirectShowLib.Samples
 			DsError.ThrowExceptionForHR(hr);
 
 			//Add the Video input device to the graph
-			hr = graphBuilder.AddFilter(theDevice, "source filter");
+			hr = graphBuilder.AddFilter(VideoDevice1, "source filter");
 			DsError.ThrowExceptionForHR(hr);
 
 			
@@ -312,16 +383,16 @@ namespace DirectShowLib.Samples
 			//Create the file writer part of the graph. SetOutputFileName does this for us, and returns the mux and sink
 			IBaseFilter mux;
 			IFileSinkFilter sink;
-			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, textBox1.Text, out mux, out sink);
+			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, OutputBox.Text, out mux, out sink);
 			DsError.ThrowExceptionForHR(hr);
 
 
 			//Render any preview pin of the device
-			hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, theDevice, null, null);
+			hr = captureGraphBuilder.RenderStream(PinCategory.Preview, MediaType.Video, VideoDevice1, null, null);
 			DsError.ThrowExceptionForHR(hr);
 
 			//Connect the device and compressor to the mux to render the capture part of the graph
-			hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video, theDevice, theCompressor, mux);
+			hr = captureGraphBuilder.RenderStream(PinCategory.Capture, MediaType.Video, VideoDevice1, theCompressor, mux);
 			DsError.ThrowExceptionForHR(hr);
 
 #if DEBUG
@@ -463,43 +534,62 @@ namespace DirectShowLib.Samples
             }
 		}
 
-		private void button1_Click(object sender, System.EventArgs e)
+		private void VideoDeviceButton1_Click(object sender, System.EventArgs e)
 		{
 			//Display property page for the selected video input device
-			DisplayPropertyPage(theDevice);
+			DisplayPropertyPage(VideoDevice1);
 		}
 
-		private void button2_Click(object sender, System.EventArgs e)
+        private void VideoDeviceButton2_Click(object sender, System.EventArgs e)
+        {
+            //Display property page for the selected video input device
+            DisplayPropertyPage(VideoDevice2);
+        }
+
+		private void CodecButton_Click(object sender, System.EventArgs e)
 		{
 			//Display property page for the selected video compressor
 			DisplayPropertyPage(theCompressor);		
 		}
 
-		private void button4_Click(object sender, System.EventArgs e)
+		private void RecordButton_Click(object sender, System.EventArgs e)
 		{
 			InitGraph();
 			Record();
 		}
 
-		private void button3_Click(object sender, System.EventArgs e)
+		private void StopButton_Click(object sender, System.EventArgs e)
 		{
 			StopRecord();
 		}
 
-		private void comboBox1_SelectedIndexChanged(object sender, System.EventArgs e)
+		private void VideoDeviceList1_SelectedIndexChanged(object sender, System.EventArgs e)
 		{
 			//Release COM objects
-			if (theDevice != null)
+			if (VideoDevice1 != null)
 			{
-				Marshal.ReleaseComObject(theDevice);
-				theDevice = null;
+				Marshal.ReleaseComObject(VideoDevice1);
+				VideoDevice1 = null;
 			}
 			//Create the filter for the selected video input device
-			string devicepath = comboBox1.SelectedItem.ToString();
-			theDevice = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
+			string devicepath = VideoDeviceList1.SelectedItem.ToString();
+			VideoDevice1 = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
 		}
 
-		private void comboBox2_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void VideoDeviceList2_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            //Release COM objects
+            if (VideoDevice2 != null)
+            {
+                Marshal.ReleaseComObject(VideoDevice2);
+                VideoDevice2 = null;
+            }
+            //Create the filter for the selected video input device
+            string devicepath = VideoDeviceList2.SelectedItem.ToString();
+            VideoDevice2 = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
+        }
+
+		private void CodecList_SelectedIndexChanged(object sender, System.EventArgs e)
 		{
 			//Release COM objects
 			if (theCompressor != null)
@@ -508,7 +598,7 @@ namespace DirectShowLib.Samples
 				theCompressor = null;
 			}
 			//Create the filter for the selected video compressor
-			string devicepath = comboBox2.SelectedItem.ToString();
+			string devicepath = CodecList.SelectedItem.ToString();
 			theCompressor = CreateFilter(FilterCategory.VideoCompressorCategory, devicepath);
 		}
 	}
