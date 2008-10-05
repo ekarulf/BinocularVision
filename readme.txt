@@ -4,7 +4,8 @@ Date:   October 4, 2008
 
 == Description ==
 This application is designed to take input from two video inputs (typically
-a webcam) and record the two video streams to a file.
+two webcams) and record the two video streams to a file with some level of
+synchronization between the two cameras.
 
 == Change Log ==
  * 10/4/2008 - Initial Version (based off of DxPropPages sample)
