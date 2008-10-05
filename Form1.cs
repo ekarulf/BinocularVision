@@ -31,13 +31,17 @@ namespace WUSTL.CSE.BinocularVision
 		private System.Windows.Forms.Button CodecButton;
 		private System.Windows.Forms.Button StopButton;
 		private System.Windows.Forms.Button RecordButton;
-		private System.Windows.Forms.TextBox OutputBox;
+		private System.Windows.Forms.TextBox FolderBox;
 		private System.Windows.Forms.Panel panel1;
         private Panel panel2;
         private Button VideoButton2;
         private ComboBox VideoDeviceList2;
         private GroupBox groupBox1;
         private Button OutputButton;
+        private FolderBrowserDialog folderBrowserDialog1;
+        private Label label1;
+        private Label label2;
+        private TextBox FilenameBox;
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
@@ -59,8 +63,8 @@ namespace WUSTL.CSE.BinocularVision
 			int dwReserved, 
 			IntPtr lpvReserved);
 
-			IMediaControl mediaControl = null;
-			IGraphBuilder graphBuilder = null;
+			IMediaControl MediaControl1 = null;
+			IGraphBuilder GraphBuilder1 = null;
             IBaseFilter VideoDevice1 = null;
             IBaseFilter VideoDevice2 = null;
             IBaseFilter theCompressor = null;
@@ -116,6 +120,9 @@ namespace WUSTL.CSE.BinocularVision
 			RecordButton.Enabled = true;
 			StopButton.Enabled = false;
 
+            //Initialize output folder
+            FolderBox.Text = folderBrowserDialog1.SelectedPath;
+
 		}
 
 		/// <summary>
@@ -147,13 +154,17 @@ namespace WUSTL.CSE.BinocularVision
             this.CodecButton = new System.Windows.Forms.Button();
             this.StopButton = new System.Windows.Forms.Button();
             this.RecordButton = new System.Windows.Forms.Button();
-            this.OutputBox = new System.Windows.Forms.TextBox();
+            this.FolderBox = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
             this.VideoButton2 = new System.Windows.Forms.Button();
             this.VideoDeviceList2 = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.FilenameBox = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.OutputButton = new System.Windows.Forms.Button();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -169,7 +180,7 @@ namespace WUSTL.CSE.BinocularVision
             // CodecList
             // 
             this.CodecList.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.CodecList.Location = new System.Drawing.Point(6, 19);
+            this.CodecList.Location = new System.Drawing.Point(418, 13);
             this.CodecList.Name = "CodecList";
             this.CodecList.Size = new System.Drawing.Size(256, 21);
             this.CodecList.TabIndex = 1;
@@ -187,38 +198,37 @@ namespace WUSTL.CSE.BinocularVision
             // CodecButton
             // 
             this.CodecButton.Enabled = false;
-            this.CodecButton.Location = new System.Drawing.Point(270, 16);
+            this.CodecButton.Location = new System.Drawing.Point(682, 10);
             this.CodecButton.Name = "CodecButton";
-            this.CodecButton.Size = new System.Drawing.Size(120, 24);
+            this.CodecButton.Size = new System.Drawing.Size(106, 24);
             this.CodecButton.TabIndex = 3;
             this.CodecButton.Text = "Configure";
             this.CodecButton.Click += new System.EventHandler(this.CodecButton_Click);
             // 
             // StopButton
             // 
-            this.StopButton.Location = new System.Drawing.Point(604, 44);
+            this.StopButton.Location = new System.Drawing.Point(682, 43);
             this.StopButton.Name = "StopButton";
-            this.StopButton.Size = new System.Drawing.Size(192, 23);
+            this.StopButton.Size = new System.Drawing.Size(106, 23);
             this.StopButton.TabIndex = 11;
             this.StopButton.Text = "Stop";
             this.StopButton.Click += new System.EventHandler(this.StopButton_Click);
             // 
             // RecordButton
             // 
-            this.RecordButton.Location = new System.Drawing.Point(604, 17);
+            this.RecordButton.Location = new System.Drawing.Point(570, 43);
             this.RecordButton.Name = "RecordButton";
-            this.RecordButton.Size = new System.Drawing.Size(192, 23);
+            this.RecordButton.Size = new System.Drawing.Size(106, 23);
             this.RecordButton.TabIndex = 10;
             this.RecordButton.Text = "Record";
             this.RecordButton.Click += new System.EventHandler(this.RecordButton_Click);
             // 
-            // OutputBox
+            // FolderBox
             // 
-            this.OutputBox.Location = new System.Drawing.Point(6, 46);
-            this.OutputBox.Name = "OutputBox";
-            this.OutputBox.Size = new System.Drawing.Size(256, 20);
-            this.OutputBox.TabIndex = 6;
-            this.OutputBox.Text = "c:\\test.avi";
+            this.FolderBox.Location = new System.Drawing.Point(53, 15);
+            this.FolderBox.Name = "FolderBox";
+            this.FolderBox.Size = new System.Drawing.Size(219, 20);
+            this.FolderBox.TabIndex = 6;
             // 
             // panel1
             // 
@@ -256,8 +266,11 @@ namespace WUSTL.CSE.BinocularVision
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label2);
+            this.groupBox1.Controls.Add(this.FilenameBox);
+            this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.OutputButton);
-            this.groupBox1.Controls.Add(this.OutputBox);
+            this.groupBox1.Controls.Add(this.FolderBox);
             this.groupBox1.Controls.Add(this.CodecList);
             this.groupBox1.Controls.Add(this.CodecButton);
             this.groupBox1.Controls.Add(this.StopButton);
@@ -269,14 +282,44 @@ namespace WUSTL.CSE.BinocularVision
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Output";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(11, 48);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(49, 13);
+            this.label2.TabIndex = 14;
+            this.label2.Text = "Filename";
+            // 
+            // FilenameBox
+            // 
+            this.FilenameBox.Location = new System.Drawing.Point(66, 45);
+            this.FilenameBox.Name = "FilenameBox";
+            this.FilenameBox.Size = new System.Drawing.Size(318, 20);
+            this.FilenameBox.TabIndex = 13;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(11, 18);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(36, 13);
+            this.label1.TabIndex = 12;
+            this.label1.Text = "Folder";
+            // 
             // OutputButton
             // 
-            this.OutputButton.Location = new System.Drawing.Point(270, 46);
+            this.OutputButton.Location = new System.Drawing.Point(278, 13);
             this.OutputButton.Name = "OutputButton";
-            this.OutputButton.Size = new System.Drawing.Size(120, 23);
+            this.OutputButton.Size = new System.Drawing.Size(106, 23);
             this.OutputButton.TabIndex = 7;
             this.OutputButton.Text = "Browse";
             this.OutputButton.UseVisualStyleBackColor = true;
+            this.OutputButton.Click += new System.EventHandler(this.OutputButton_Click);
+            // 
+            // folderBrowserDialog1
+            // 
+            this.folderBrowserDialog1.Description = "Select a folder to save video streams...";
             // 
             // Form1
             // 
@@ -315,11 +358,11 @@ namespace WUSTL.CSE.BinocularVision
 		public void StopRecord()
 		{
 			//Stop the Graph
-			mediaControl.Stop();
+			MediaControl1.Stop();
 
 			//Release COM objects
-			Marshal.ReleaseComObject(mediaControl);
-			Marshal.ReleaseComObject(graphBuilder);
+			Marshal.ReleaseComObject(MediaControl1);
+			Marshal.ReleaseComObject(GraphBuilder1);
 
 			//Reset button state
 			RecordButton.Enabled = true;
@@ -338,14 +381,14 @@ namespace WUSTL.CSE.BinocularVision
 		/// </summary>
 		public void Record()
 		{
-			if (mediaControl != null)
+			if (MediaControl1 != null)
 			{
 				//Reset button state
 				RecordButton.Enabled = false;
 				StopButton.Enabled = true;	
 			
 				//Run the graph
-				mediaControl.Run();
+				MediaControl1.Run();
 			}
 		}
 
@@ -358,32 +401,32 @@ namespace WUSTL.CSE.BinocularVision
 				return;
 
 			//Create the Graph
-			graphBuilder = (IGraphBuilder) new FilterGraph();
+			GraphBuilder1 = (IGraphBuilder) new FilterGraph();
 			
 			//Create the Capture Graph Builder
 			ICaptureGraphBuilder2 captureGraphBuilder = null;
 			captureGraphBuilder = (ICaptureGraphBuilder2) new CaptureGraphBuilder2();
 			
 			//Create the media control for controlling the graph
-			mediaControl = (IMediaControl) this.graphBuilder;
+			MediaControl1 = (IMediaControl) this.GraphBuilder1;
 
 			// Attach the filter graph to the capture graph
-			int hr = captureGraphBuilder.SetFiltergraph(this.graphBuilder);
+			int hr = captureGraphBuilder.SetFiltergraph(this.GraphBuilder1);
 			DsError.ThrowExceptionForHR(hr);
 
 			//Add the Video input device to the graph
-			hr = graphBuilder.AddFilter(VideoDevice1, "source filter");
+			hr = GraphBuilder1.AddFilter(VideoDevice1, "source filter");
 			DsError.ThrowExceptionForHR(hr);
 
 			
 			//Add the Video compressor filter to the graph
-			hr = graphBuilder.AddFilter(theCompressor, "compressor filter");
+			hr = GraphBuilder1.AddFilter(theCompressor, "compressor filter");
 			DsError.ThrowExceptionForHR(hr);
 
 			//Create the file writer part of the graph. SetOutputFileName does this for us, and returns the mux and sink
 			IBaseFilter mux;
 			IFileSinkFilter sink;
-			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, OutputBox.Text, out mux, out sink);
+			hr = captureGraphBuilder.SetOutputFileName(MediaSubType.Avi, FolderBox.Text, out mux, out sink);
 			DsError.ThrowExceptionForHR(hr);
 
 
@@ -396,12 +439,12 @@ namespace WUSTL.CSE.BinocularVision
 			DsError.ThrowExceptionForHR(hr);
 
 #if DEBUG
-			m_rot = new DsROTEntry(graphBuilder);
+			m_rot = new DsROTEntry(GraphBuilder1);
 #endif
 
 			//get the video window from the graph
 			IVideoWindow videoWindow = null;
-			videoWindow = (IVideoWindow) graphBuilder;
+			videoWindow = (IVideoWindow) GraphBuilder1;
 
 			//Set the owener of the videoWindow to an IntPtr of some sort (the Handle of any control - could be a form / button etc.)
 			hr = videoWindow.put_Owner(panel1.Handle);
@@ -554,6 +597,18 @@ namespace WUSTL.CSE.BinocularVision
 
 		private void RecordButton_Click(object sender, System.EventArgs e)
 		{
+            if (FilenameBox.Text.Length == 0)
+            {
+                MessageBox.Show(this, "Please enter a filename");
+                FilenameBox.Show();
+                return;
+            }
+            if (FolderBox.Text.Length == 0)
+            {
+                SelectOutputFolder();
+                if (FolderBox.Text.Length == 0)
+                    return;
+            }
 			InitGraph();
 			Record();
 		}
@@ -601,5 +656,16 @@ namespace WUSTL.CSE.BinocularVision
 			string devicepath = CodecList.SelectedItem.ToString();
 			theCompressor = CreateFilter(FilterCategory.VideoCompressorCategory, devicepath);
 		}
+
+        private void OutputButton_Click(object sender, EventArgs e)
+        {
+            SelectOutputFolder();
+        }
+
+        private void SelectOutputFolder()
+        {
+            folderBrowserDialog1.ShowDialog();
+            FolderBox.Text = folderBrowserDialog1.SelectedPath;
+        }
 	}
 }
