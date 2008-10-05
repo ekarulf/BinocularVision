@@ -122,6 +122,15 @@ namespace WUSTL.CSE.BinocularVision
 				CodecList.SelectedIndex = 0;
 			}
 
+            //Select MPEG Compression by default
+            foreach(object codec in CodecList.Items)
+            {
+                if (codec.ToString().Contains("MJPEG"))
+                {
+                    CodecList.SelectedIndex = CodecList.Items.IndexOf(codec);
+                }
+            }
+
 			//Initialize button states
 			RecordButton.Enabled = true;
 			StopButton.Enabled = false;
@@ -231,9 +240,9 @@ namespace WUSTL.CSE.BinocularVision
             // 
             // FolderBox
             // 
-            this.FolderBox.Location = new System.Drawing.Point(53, 15);
+            this.FolderBox.Location = new System.Drawing.Point(66, 15);
             this.FolderBox.Name = "FolderBox";
-            this.FolderBox.Size = new System.Drawing.Size(219, 20);
+            this.FolderBox.Size = new System.Drawing.Size(206, 20);
             this.FolderBox.TabIndex = 6;
             // 
             // panel1
