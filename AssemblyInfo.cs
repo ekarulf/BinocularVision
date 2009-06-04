@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Washington University in St. Louis")]
 [assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("2008")]
+[assembly: AssemblyCopyright("Washington University 2008-2009")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]		
 
