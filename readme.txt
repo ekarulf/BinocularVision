@@ -1,6 +1,6 @@
 == Binocular Vision ==
 Author: Erik Karulf (erik@cse.wustl.edu)
-Date:   October 4, 2008
+Date:   June 4, 2009
 
 == Description ==
 This application is designed to take input from two video inputs (typically
@@ -8,6 +8,7 @@ two webcams) and record the two video streams to a file with some level of
 synchronization between the two cameras.
 
 == Change Log ==
+ * 6/4/2009  - Moved to using AForge.NET
  * 10/4/2008 - Initial Version (based off of DxPropPages sample)
 
 == MIT License == 
@@ -32,6 +33,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 == LGL License ==
-This application uses the DirectShow.NET library licensed under the LGPL.
-More information about DirectShow.NET can be found at their website:
-http://directshownet.sourceforge.net/
+This application uses the AForge.NET library licensed under the LGPL.
+More information about AForge.NET can be found at their website:
+http://www.aforgenet.com/framework/
