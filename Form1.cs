@@ -35,6 +35,7 @@ using System.Diagnostics;
 using AForge;
 using AForge.Video;
 using AForge.Video.DirectShow;
+using System.Threading;
 
 namespace WUSTL.CSE.BinocularVision
 {
@@ -72,23 +73,16 @@ namespace WUSTL.CSE.BinocularVision
         private AForge.Controls.VideoSourcePlayer videoPlayer2;
         private ComboBox camera2Combo;
         private Button camera2ConfigureButton;
-        private Timer timer1;
 
         // Data Members
         private FilterInfoCollection videoDevices = null;
         private VideoCaptureDevice Camera1 = null;
         private VideoCaptureDevice Camera2 = null;
         private State state = State.Disabled;
-
-        // statistics length
-        private const int statLength = 15;
-        // current statistics index
-        private int statIndex = 0;
-        // ready statistics values
-        private int statReady = 0;
-        // statistics array
-        private int[] statCount1 = new int[statLength];
-        private int[] statCount2 = new int[statLength];
+        private AutoResetEvent camera1Acquired = null;
+        private AutoResetEvent camera2Acquired = null;
+        private Thread recordingThread = null;
+        private bool Recording = false;
 
 
         public Form1()
@@ -235,7 +229,6 @@ namespace WUSTL.CSE.BinocularVision
             this.videoPlayer2 = new AForge.Controls.VideoSourcePlayer();
             this.camera2Combo = new System.Windows.Forms.ComboBox();
             this.camera2ConfigureButton = new System.Windows.Forms.Button();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.outputGroupBox.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -541,11 +534,21 @@ namespace WUSTL.CSE.BinocularVision
 
         private void StartRecording() 
         {
-            // TODO: Implement
+            camera1Acquired = new AutoResetEvent(false);
+            camera2Acquired = new AutoResetEvent(false);
+            // start tracking thread
+            trackingThread = new Thread(new ThreadStart(RecordingThread));
+            trackingThread.Start();
         }
         private void StopRecording() 
         {
-            // TODO: Implement
+            if (trackingThread != null)
+            {
+                // signal tracking thread to stop
+                camera1Acquired.Set();
+                camera2Acquired.Set();
+                trackingThread.Join();
+            }
         }
 
         private void VideoDeviceButton1_Click(object sender, System.EventArgs e)
@@ -598,6 +601,17 @@ namespace WUSTL.CSE.BinocularVision
         {
             folderBrowserDialog1.ShowDialog();
             folderTextBox.Text = folderBrowserDialog1.SelectedPath;
+        }
+
+        private void RecordingThread()
+        {
+            // Setup Output Buffers
+
+            while (Recording)
+            {
+                camera1Acquired.WaitOne();
+                camera2Acquired.WaitOne();
+            }
         }
     }
 }
